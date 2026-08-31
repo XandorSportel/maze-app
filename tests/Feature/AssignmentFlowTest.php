@@ -18,7 +18,15 @@ class AssignmentFlowTest extends TestCase
         $this->get(route('assignments.index'))->assertOk()->assertSee($assignment->name);
         $this->get(route('assignments.show', $assignment))->assertOk()->assertSee('Jouw programma');
         $this->get(route('submissions.index'))->assertOk()->assertSee('Alle pogingen');
-        $this->get(route('glades.create'))->assertOk()->assertSee('Tegelpalet')->assertSee('Muur (O2)')->assertSee('Kostenkaart instellen');
+        $this->get(route('glades.create'))
+            ->assertOk()
+            ->assertSee('Tegelpalet')
+            ->assertSee('Muur (O2)')
+            ->assertSee('Kostenkaart instellen')
+            ->assertSee('data-tile="E1"', false)
+            ->assertSee('data-tile="E9"', false)
+            ->assertSee('data-tile="B0"', false)
+            ->assertSee('data-tile="B8"', false);
     }
 
     public function test_each_run_is_stored_as_a_new_submission_with_calculated_costs(): void
@@ -212,6 +220,44 @@ CODE;
         $this->assertSame(166, $submission->total_cost);
         $this->assertContains('kosten voor botsen / duwen: 100', $submission->execution_log);
         $this->assertContains('kosten voor stap vooruit: 1 naar: [2,1]', $submission->execution_log);
+    }
+
+    public function test_a_b1_bomb_can_be_crossed_in_the_next_second(): void
+    {
+        $tiles = array_fill(0, 400, 'C3');
+        $tiles[21] = 'S1';
+        $tiles[22] = 'B1';
+        $tiles[23] = 'D1';
+        $assignment = $this->assignmentWithTiles($tiles);
+
+        $this->post(route('submissions.store', $assignment), [
+            'code' => "stapVooruit\nstapVooruit",
+        ])->assertRedirect();
+
+        $submission = Submission::firstOrFail();
+        $this->assertSame('Doel bereikt', $submission->status);
+        $this->assertSame(23, $submission->final_state['position']);
+        $this->assertSame('O0', $submission->final_state['tiles'][22]);
+        $this->assertContains('bom op [1,2] ontploft.', $submission->execution_log);
+    }
+
+    public function test_turning_on_a_b1_bomb_destroys_the_runner(): void
+    {
+        $tiles = array_fill(0, 400, 'C3');
+        $tiles[21] = 'S1';
+        $tiles[22] = 'B1';
+        $tiles[23] = 'D1';
+        $assignment = $this->assignmentWithTiles($tiles);
+
+        $this->post(route('submissions.store', $assignment), [
+            'code' => "stapVooruit\ndraaiRechts",
+        ])->assertRedirect();
+
+        $submission = Submission::firstOrFail();
+        $this->assertSame('Bom geraakt', $submission->status);
+        $this->assertSame(0, $submission->remaining_budget);
+        $this->assertSame(22, $submission->final_state['position']);
+        $this->assertSame('O0', $submission->final_state['tiles'][22]);
     }
 
     public function test_assignments_can_be_searched_by_name_or_description(): void
