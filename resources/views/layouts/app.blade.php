@@ -21,7 +21,7 @@
         <a @class(['active' => request()->routeIs('submissions.*')]) href="{{ route('submissions.index') }}">Gemaakt</a>
         <a @class(['active' => request()->routeIs('glades.*')]) href="{{ route('glades.create') }}">Glade maken</a>
     </nav>
-    <div class="team"><span>Zandbak</span><strong>Glade Runners</strong><i></i></div>
+    <div class="team"><span>Sandbox</span><strong>Glade Runners</strong><i></i></div>
 </header>
 
 @if (session('success'))

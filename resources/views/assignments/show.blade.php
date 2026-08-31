@@ -4,7 +4,7 @@
 
 @section('content')
 <section class="detail-header">
-    <div><a class="back-link" href="{{ route('assignments.index') }}">← Alle opdrachten</a><span class="eyebrow">{{ $assignment->is_custom ? 'Eigen glade' : 'Zandbakopdracht' }}</span><h1>{{ $assignment->name }}</h1><p>{{ $assignment->description }}</p></div>
+    <div><a class="back-link" href="{{ route('assignments.index') }}">← Alle opdrachten</a><span class="eyebrow">{{ $assignment->is_custom ? 'Eigen glade' : 'Sandboxopdracht' }}</span><h1>{{ $assignment->name }}</h1><p>{{ $assignment->description }}</p></div>
     <div class="header-facts"><div><span>Startkapitaal</span><strong>€ {{ number_format($assignment->start_capital, 0, ',', '.') }}</strong></div><div><span>Eerdere pogingen</span><strong>{{ $assignment->submissions_count }}</strong></div></div>
 </section>
 

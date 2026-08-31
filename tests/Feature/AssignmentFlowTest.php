@@ -121,7 +121,7 @@ CODE;
     private function assignmentWithTiles(array $tiles): Assignment
     {
         return Assignment::create([
-            'name' => 'Zandbak #001',
+            'name' => 'Sandbox #001',
             'description' => 'Testopdracht',
             'map_definition' => implode(' ', $tiles),
             'costs' => config('glade.default_costs'),

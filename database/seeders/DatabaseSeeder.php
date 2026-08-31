@@ -42,7 +42,7 @@ MAP;
 
         foreach (range(11, 18) as $number) {
             Assignment::firstOrCreate(
-                ['name' => sprintf('Zandbak #%03d', $number)],
+                ['name' => sprintf('Sandbox #%03d', $number)],
                 [
                     'description' => 'Bereik alle doelen in de juiste volgorde en houd zoveel mogelijk budget over.',
                     'map_definition' => $map,
