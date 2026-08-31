@@ -30,7 +30,7 @@
 
 <main>@yield('content')</main>
 
-<footer><strong>A-Mazing Challenge 20</strong><span>Schooljaar 2026–2027 · HBO-ICT</span></footer>
+<footer><strong>A-Mazing Challenge 20</strong><span>Medemogelijk gemaakt door ome Chat</span></footer>
 @stack('scripts')
 </body>
 </html>
