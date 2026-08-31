@@ -3,6 +3,18 @@
     content: none;
 }
 
+/*
+ * Houd alle 20 kaart-rijen exact even hoog. Zonder expliciete rijen kan de
+ * intrinsieke hoogte van het teksticoon op een starttegel één rij oprekken.
+ */
+.glade-map {
+    grid-template-rows: repeat(20, minmax(0, 1fr));
+}
+
+.glade-map .tile {
+    min-height: 0;
+}
+
 .palette-secondary-action {
     margin-top: 7px;
 }
@@ -112,4 +124,13 @@
 /* Draai-icoon leesbaar houden op wit */
 .glade-map .tile-r::before {
     color: #286b46;
+}
+
+.glade-map .tile-s::before {
+    display: grid;
+    width: 80%;
+    height: 80%;
+    place-items: center;
+    font-size: clamp(10px, 1.55vw, 23px);
+    line-height: 1;
 }
