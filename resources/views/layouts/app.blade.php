@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     <link rel="stylesheet" href="{{ asset('css/glade-icons.css') }}">
     <link rel="stylesheet" href="{{ asset('css/glade-enhancements.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/filters.css') }}">
     @stack('head')
 </head>
 <body>

@@ -109,6 +109,44 @@ CODE;
         $this->assertSame(9, $submission->final_state['variables']['i']);
     }
 
+    public function test_assignments_can_be_searched_by_name_or_description(): void
+    {
+        $alpha = $this->assignment();
+        $alpha->update(['name' => 'Alfa doolhof', 'description' => 'Een groene route']);
+        $beta = $this->assignment();
+        $beta->update(['name' => 'Beta doolhof', 'description' => 'Een blauwe route']);
+
+        $this->get(route('assignments.index', ['q' => 'groene']))
+            ->assertOk()
+            ->assertSee($alpha->name)
+            ->assertDontSee($beta->name);
+    }
+
+    public function test_submissions_can_be_searched_and_sorted_from_table_columns(): void
+    {
+        $alpha = $this->assignment();
+        $alpha->update(['name' => 'Alfa opdracht']);
+        $beta = $this->assignment();
+        $beta->update(['name' => 'Beta opdracht']);
+
+        $cheap = $this->storedSubmission($alpha, 100, 1900, '2026-01-10 10:00:00');
+        $expensive = $this->storedSubmission($beta, 500, 1200, '2026-08-10 10:00:00');
+
+        $this->get(route('submissions.index', ['q' => 'Alfa']))
+            ->assertOk()
+            ->assertSee($alpha->name)
+            ->assertDontSee($beta->name)
+            ->assertSee('sort=cost_asc', false);
+
+        $this->get(route('submissions.index', ['sort' => 'cost_desc']))
+            ->assertOk()
+            ->assertSeeInOrder([$expensive->assignment->name, $cheap->assignment->name]);
+
+        $this->get(route('submissions.index', ['sort' => 'oldest']))
+            ->assertOk()
+            ->assertSeeInOrder([$cheap->assignment->name, $expensive->assignment->name]);
+    }
+
     private function assignment(): Assignment
     {
         $tiles = array_fill(0, 400, 'C3');
@@ -128,5 +166,20 @@ CODE;
             'start_capital' => 2024,
             'is_active' => true,
         ]);
+    }
+
+    private function storedSubmission(Assignment $assignment, int $cost, int $remaining, string $createdAt): Submission
+    {
+        $submission = $assignment->submissions()->create([
+            'code' => 'stapVooruit',
+            'status' => 'Doel bereikt',
+            'total_cost' => $cost,
+            'remaining_budget' => $remaining,
+            'execution_log' => ['Test'],
+            'final_state' => ['position' => 22, 'direction' => 1, 'goal' => 2, 'collected' => [], 'variables' => []],
+        ]);
+        $submission->forceFill(['created_at' => $createdAt, 'updated_at' => $createdAt])->save();
+
+        return $submission->fresh('assignment');
     }
 }

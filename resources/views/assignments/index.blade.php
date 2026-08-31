@@ -9,7 +9,15 @@
 </section>
 
 <section class="content-section">
-    <div class="section-title"><div><span class="section-number">01</span><h2>Opdrachten overzicht</h2></div><span>{{ $assignments->count() }} beschikbaar</span></div>
+    <div class="section-title"><div><span class="section-number">01</span><h2>Opdrachten overzicht</h2></div><span>{{ $assignments->count() }} {{ filled($filters['q'] ?? null) ? 'gevonden' : 'beschikbaar' }}</span></div>
+    <form class="filter-panel assignment-search" method="get" action="{{ route('assignments.index') }}">
+        <label class="search-field">
+            <span>Zoek een opdracht</span>
+            <span class="search-input"><i>⌕</i><input type="search" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="Zoek op naam of omschrijving…" autocomplete="off"></span>
+        </label>
+        <button class="button primary" type="submit">Zoeken</button>
+        @if(filled($filters['q'] ?? null))<a class="clear-filters" href="{{ route('assignments.index') }}">Zoekopdracht wissen</a>@endif
+    </form>
     <div class="assignment-list">
         @forelse ($assignments as $assignment)
             <article class="assignment-row">
@@ -20,7 +28,7 @@
                 <a class="row-action" href="{{ route('assignments.show', $assignment) }}">Maak opdracht <b>→</b></a>
             </article>
         @empty
-            <div class="empty-state"><h3>Nog geen opdrachten</h3><p>Maak eerst een eigen glade om te beginnen.</p></div>
+            <div class="empty-state"><h3>Geen opdrachten gevonden</h3><p>Probeer een andere zoekterm of wis de zoekopdracht.</p></div>
         @endforelse
     </div>
 </section>

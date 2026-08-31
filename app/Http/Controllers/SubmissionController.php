@@ -8,14 +8,39 @@ use App\Services\GladeSimulator;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class SubmissionController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        $submissions = Submission::query()->with('assignment')->latest()->paginate(15);
+        $filters = $request->validate([
+            'q' => ['nullable', 'string', 'max:100'],
+            'sort' => ['nullable', Rule::in(['newest', 'oldest', 'cost_asc', 'cost_desc', 'remaining_asc', 'remaining_desc'])],
+        ]);
 
-        return view('submissions.index', compact('submissions'));
+        $submissions = Submission::query()
+            ->with('assignment')
+            ->when($filters['q'] ?? null, function ($query, string $search): void {
+                $query->where(function ($query) use ($search): void {
+                    $query->where('status', 'like', "%{$search}%")
+                        ->orWhere('code', 'like', "%{$search}%")
+                        ->orWhereHas('assignment', fn ($query) => $query->where('name', 'like', "%{$search}%"));
+                });
+            });
+
+        match ($filters['sort'] ?? 'newest') {
+            'oldest' => $submissions->oldest(),
+            'cost_asc' => $submissions->orderBy('total_cost'),
+            'cost_desc' => $submissions->orderByDesc('total_cost'),
+            'remaining_asc' => $submissions->orderBy('remaining_budget'),
+            'remaining_desc' => $submissions->orderByDesc('remaining_budget'),
+            default => $submissions->latest(),
+        };
+
+        $submissions = $submissions->paginate(15)->withQueryString();
+
+        return view('submissions.index', compact('submissions', 'filters'));
     }
 
     public function show(Submission $submission): View
