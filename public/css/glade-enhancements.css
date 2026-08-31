@@ -97,3 +97,19 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* Witte achtergrond voor alle objecttegels */
+.glade-map .tile-o,
+.glade-map .tile-d,
+.glade-map .tile-e,
+.glade-map .tile-r,
+.glade-map .tile-s,
+.glade-map .tile-b {
+    background: #fff;
+    color: #66716c;
+}
+
+/* Draai-icoon leesbaar houden op wit */
+.glade-map .tile-r::before {
+    color: #286b46;
+}
