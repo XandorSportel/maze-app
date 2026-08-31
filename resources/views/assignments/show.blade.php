@@ -22,9 +22,9 @@
         <div class="editor">
             <div class="editor-bar"><span><i></i><i></i><i></i></span><b>oplossing.20</b><small id="lineCount">1 regel</small></div>
             <div class="editor-body"><pre id="lineNumbers">1</pre><textarea id="code" name="code" spellcheck="false" required>{{ old('code', "stapVooruit\nstapVooruit\nstapVooruit\nstapVooruit\ndraaiRechts\nstapVooruit") }}</textarea></div>
-            <div class="editor-footer"><span>Ondersteund: stapVooruit, stapAchteruit, draaiLinks, draaiRechts</span><button class="button primary" type="submit">▶ Uitvoeren en opslaan</button></div>
+            <div class="editor-footer"><span>Ook beschikbaar: gebruik, variabelen, als, zolang en + − * / %</span><button class="button primary" type="submit">▶ Uitvoeren en opslaan</button></div>
         </div>
-        <aside class="run-help"><span class="run-icon">⌘</span><h3>Hoe werkt uitvoeren?</h3><p>De code wordt door de Laravel-server gecontroleerd en uitgevoerd. Daarna zie je de status, totale kosten, resterend budget en het volledige logboek.</p><ul><li>Een nieuwe uitvoering overschrijft niets.</li><li>Bonussen worden bij je budget opgeteld.</li><li>Doelen moeten op volgorde worden bereikt.</li></ul></aside>
+        <aside class="run-help"><span class="run-icon">⌘</span><h3>Taal 20</h3><p>De code wordt door de Laravel-server gecontroleerd en uitgevoerd. Daarna zie je de status, totale kosten, variabelen en het volledige logboek.</p><ul><li>Declareer met <code>gebruik i</code>.</li><li>Gebruik <code>als i == 5 {</code> en <code>zolang i &lt; 9 {</code>.</li><li>Een nieuwe uitvoering overschrijft niets.</li><li>Oneindige lussen stoppen na 10.000 stappen.</li></ul></aside>
     </form>
 </section>
 @endsection

@@ -53,12 +53,44 @@ class AssignmentFlowTest extends TestCase
         $this->assertDatabaseHas('assignments', ['name' => 'Mijn Glade', 'is_custom' => true]);
     }
 
+    public function test_variables_conditions_and_loops_are_executed_with_costs(): void
+    {
+        $tiles = array_fill(0, 400, 'C3');
+        $tiles[210] = 'S1';
+        $tiles[135] = 'D1';
+        $assignment = $this->assignmentWithTiles($tiles);
+        $code = <<<'CODE'
+gebruik i
+i = 0
+
+zolang i < 9 {
+als i == 5 {
+draaiLinks
+}
+stapVooruit
+i = i + 1
+}
+CODE;
+
+        $this->post(route('submissions.store', $assignment), ['code' => $code])->assertRedirect();
+
+        $submission = Submission::firstOrFail();
+        $this->assertSame('Doel bereikt', $submission->status);
+        $this->assertSame(270, $submission->total_cost);
+        $this->assertSame(9, $submission->final_state['variables']['i']);
+    }
+
     private function assignment(): Assignment
     {
         $tiles = array_fill(0, 400, 'C3');
         $tiles[21] = 'S1';
         $tiles[22] = 'D1';
 
+        return $this->assignmentWithTiles($tiles);
+    }
+
+    private function assignmentWithTiles(array $tiles): Assignment
+    {
         return Assignment::create([
             'name' => 'Zandbak #001',
             'description' => 'Testopdracht',

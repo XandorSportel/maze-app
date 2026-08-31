@@ -1,0 +1,62 @@
+/*
+ * Icoontjes van de glade-map.
+ *
+ * Vervang het teken bij `content` om een ander teksticoon te gebruiken.
+ * Voor een afbeelding kun je bijvoorbeeld dit gebruiken:
+ *
+ *   content: '';
+ *   width: 80%;
+ *   height: 80%;
+ *   background: url('/images/tiles/steen.png') center / contain no-repeat;
+ */
+
+.tile-o[data-code="O1"]::before {
+    content: '♣';
+    color: #143f18;
+    text-shadow: 2px 2px #7b9b38;
+}
+
+.tile-o[data-code="O2"]::before {
+    content: '●';
+    color: #3d4540;
+    text-shadow: 7px 4px #919891, -7px 4px #444b47;
+}
+
+.tile-o[data-code="O3"]::before {
+    content: '▰';
+    color: #57321f;
+    transform: rotate(-28deg);
+}
+
+.tile-d::before {
+    content: '⌖';
+    color: #17231f;
+    background: #fff;
+    border-radius: 50%;
+}
+
+.tile-e::before {
+    content: '✦';
+    color: #ffe27a;
+    text-shadow: 1px 1px #725000;
+}
+
+.tile-r::before {
+    content: '↻';
+    color: #fff;
+}
+
+.tile-s::before {
+    content: '▲';
+    color: #ff5247;
+    text-shadow: 0 2px #161d1a;
+}
+
+.tile-s[data-code="S1"]::before { transform: rotate(90deg); }
+.tile-s[data-code="S2"]::before { transform: rotate(180deg); }
+.tile-s[data-code="S3"]::before { transform: rotate(270deg); }
+
+.tile-b::before {
+    content: '✹';
+    color: #111;
+}
