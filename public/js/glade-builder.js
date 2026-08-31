@@ -49,4 +49,26 @@ document.querySelector('#fillField').addEventListener('click', () => {
     updateHidden();
 });
 
+document.querySelector('#wallBorder').addEventListener('click', () => {
+    map.querySelectorAll('.tile').forEach((tile, index) => {
+        const row = Math.floor(index / 20);
+        const column = index % 20;
+        if (row === 0 || row === 19 || column === 0 || column === 19) {
+            tile.dataset.code = 'O2';
+            tile.className = classesFor('O2');
+            tile.querySelector('span').textContent = '2';
+        }
+    });
+    updateHidden();
+});
+
+document.querySelectorAll('[data-default-cost]').forEach(input => {
+    const updateChangedState = () => input.closest('.cost-input-row').classList.toggle(
+        'changed',
+        Number(input.value) !== Number(input.dataset.defaultCost),
+    );
+    input.addEventListener('input', updateChangedState);
+    updateChangedState();
+});
+
 updateHidden();

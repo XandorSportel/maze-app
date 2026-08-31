@@ -1,6 +1,6 @@
 @props(['tiles', 'finalState' => null, 'editable' => false])
 
-<div {{ $attributes->class(['glade-map', 'editable-map' => $editable]) }} data-map @if($editable) data-editable="true" @endif>
+<div {{ $attributes->class(['glade-map', 'editable-map' => $editable, 'simulation-result' => $finalState !== null]) }} data-map @if($editable) data-editable="true" @endif>
     @foreach ($tiles as $index => $tile)
         @php
             $kind = strtolower(substr($tile, 0, 1));

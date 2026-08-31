@@ -38,12 +38,7 @@ O2 O1 O1 O1 C5 C5 C5 C3 C3 C5 C5 C3 C3 C3 C5 C5 C5 C5 R1 O2
 O2 O2 O2 O2 O2 O2 O2 O2 O2 C5 C5 O2 O2 O2 O2 O2 O2 O2 O2 O2
 MAP;
 
-        $costs = [
-            'kompas' => 100, 'zwOogHardware' => 50, 'kleurOogHardware' => 200, 'variabele' => 30,
-            'stapVooruit' => 1, 'stapAchteruit' => 1, 'draaien' => 5, 'zwOog' => 10,
-            'kleurOog' => 20, 'duwen' => 100, 'toewijzing' => 2, 'operatie' => 2,
-            'vergelijking' => 2, 'zolang' => 50, 'als' => 40, 'opdracht' => 20, 'toekenning' => 10,
-        ];
+        $costs = config('glade.default_costs');
 
         foreach (range(11, 18) as $number) {
             Assignment::firstOrCreate(

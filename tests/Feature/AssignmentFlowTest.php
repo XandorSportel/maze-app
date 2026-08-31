@@ -18,7 +18,7 @@ class AssignmentFlowTest extends TestCase
         $this->get(route('assignments.index'))->assertOk()->assertSee($assignment->name);
         $this->get(route('assignments.show', $assignment))->assertOk()->assertSee('Jouw programma');
         $this->get(route('submissions.index'))->assertOk()->assertSee('Alle pogingen');
-        $this->get(route('glades.create'))->assertOk()->assertSee('Tegelpalet');
+        $this->get(route('glades.create'))->assertOk()->assertSee('Tegelpalet')->assertSee('Muur (O2)')->assertSee('Kostenkaart instellen');
     }
 
     public function test_each_run_is_stored_as_a_new_submission_with_calculated_costs(): void
@@ -35,6 +35,7 @@ class AssignmentFlowTest extends TestCase
         $this->assertSame('Doel bereikt', $submission->status);
         $this->assertSame(21, $submission->total_cost);
         $this->assertSame(2003, $submission->remaining_budget);
+        $this->get(route('submissions.show', $submission))->assertOk()->assertSee('simulation-result', false);
     }
 
     public function test_a_valid_custom_glade_can_be_created(): void
@@ -48,9 +49,37 @@ class AssignmentFlowTest extends TestCase
             'description' => 'Een testglade.',
             'start_capital' => 2024,
             'map_definition' => implode(' ', $tiles),
+            'costs' => config('glade.default_costs'),
         ])->assertRedirect();
 
         $this->assertDatabaseHas('assignments', ['name' => 'Mijn Glade', 'is_custom' => true]);
+    }
+
+    public function test_custom_costs_and_start_capital_are_saved_used_and_highlighted(): void
+    {
+        $tiles = array_fill(0, 400, 'C3');
+        $tiles[21] = 'S1';
+        $tiles[22] = 'D1';
+        $costs = config('glade.default_costs');
+        $costs['opdracht'] = 7;
+        $costs['stapVooruit'] = 3;
+
+        $this->post(route('glades.store'), [
+            'name' => 'Goedkope Glade',
+            'start_capital' => 100,
+            'map_definition' => implode(' ', $tiles),
+            'costs' => $costs,
+        ])->assertRedirect();
+
+        $assignment = Assignment::firstOrFail();
+        $this->assertSame(100, $assignment->start_capital);
+        $this->assertSame(7, $assignment->costs['opdracht']);
+        $this->get(route('assignments.show', $assignment))->assertOk()->assertSee('class="changed"', false);
+
+        $this->post(route('submissions.store', $assignment), ['code' => 'stapVooruit'])->assertRedirect();
+        $submission = Submission::firstOrFail();
+        $this->assertSame(10, $submission->total_cost);
+        $this->assertSame(90, $submission->remaining_budget);
     }
 
     public function test_variables_conditions_and_loops_are_executed_with_costs(): void
@@ -95,12 +124,7 @@ CODE;
             'name' => 'Zandbak #001',
             'description' => 'Testopdracht',
             'map_definition' => implode(' ', $tiles),
-            'costs' => [
-                'kompas' => 100, 'zwOogHardware' => 50, 'kleurOogHardware' => 200, 'variabele' => 30,
-                'stapVooruit' => 1, 'stapAchteruit' => 1, 'draaien' => 5, 'zwOog' => 10,
-                'kleurOog' => 20, 'duwen' => 100, 'toewijzing' => 2, 'operatie' => 2,
-                'vergelijking' => 2, 'zolang' => 50, 'als' => 40, 'opdracht' => 20, 'toekenning' => 10,
-            ],
+            'costs' => config('glade.default_costs'),
             'start_capital' => 2024,
             'is_active' => true,
         ]);

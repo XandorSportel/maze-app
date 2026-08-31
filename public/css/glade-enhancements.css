@@ -1,0 +1,99 @@
+/* Een uitgevoerde simulatie toont alleen de eindpositie van de robot. */
+.simulation-result .tile-s::before {
+    content: none;
+}
+
+.palette-secondary-action {
+    margin-top: 7px;
+}
+
+.editable-cost-board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    padding: 16px;
+    background: var(--green);
+    box-shadow: var(--shadow);
+}
+
+.editable-cost-column {
+    padding: 22px;
+    background: #fff;
+}
+
+.editable-cost-column h3 {
+    margin: 0 0 17px;
+    font-size: 14px;
+}
+
+.editable-cost-column h3 small {
+    display: block;
+    margin-top: 4px;
+    color: #8a938f;
+    font-size: 8px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.cost-input-row {
+    display: flex;
+    min-height: 43px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 5px 7px;
+    border-top: 1px solid #e1e4de;
+    font-size: 11px;
+    transition: background .15s, border-color .15s;
+}
+
+.cost-input {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #5f6a65;
+    font-family: "DM Mono", monospace;
+}
+
+.cost-input b {
+    font-weight: 400;
+}
+
+.cost-input input {
+    width: 76px;
+    padding: 7px 8px;
+    border: 1px solid #cfd4cc;
+    background: #f0f2ed;
+    color: var(--ink);
+    font: 11px "DM Mono", monospace;
+    outline: 0;
+}
+
+.cost-input-row.changed {
+    border-color: #e4c05d;
+    background: #fff1b8;
+}
+
+.cost-input-row.changed .cost-input input {
+    border-color: #d6ad3b;
+    background: #ffe794;
+}
+
+/* Op de opdracht- en resultaatpagina worden afwijkende kosten geel. */
+.cost-column dl div.changed {
+    margin: 0 -7px;
+    padding: 0 7px;
+    border-color: #e4c05d;
+    background: #fff1b8;
+}
+
+.cost-column dl div.changed dd {
+    border-color: #d6ad3b;
+    background: #ffe794;
+}
+
+@media (max-width: 900px) {
+    .editable-cost-board {
+        grid-template-columns: 1fr;
+    }
+}

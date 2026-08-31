@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     <link rel="stylesheet" href="{{ asset('css/glade-icons.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/glade-enhancements.css') }}">
     @stack('head')
 </head>
 <body>

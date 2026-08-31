@@ -13,17 +13,27 @@ class GladeController extends Controller
 {
     public function create(): View
     {
-        return view('glades.create', ['defaultMap' => $this->defaultMap()]);
+        return view('glades.create', [
+            'defaultMap' => $this->defaultMap(),
+            'defaultCosts' => config('glade.default_costs'),
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $rules = [
             'name' => ['required', 'string', 'max:100', Rule::unique('assignments', 'name')],
             'description' => ['nullable', 'string', 'max:1000'],
             'map_definition' => ['required', 'string'],
             'start_capital' => ['required', 'integer', 'min:1', 'max:1000000'],
-        ]);
+            'costs' => ['required', 'array'],
+        ];
+
+        foreach (array_keys(config('glade.default_costs')) as $costName) {
+            $rules["costs.{$costName}"] = ['required', 'integer', 'min:0', 'max:1000000'];
+        }
+
+        $validated = $request->validate($rules);
 
         $tiles = preg_split('/\s+/', trim($validated['map_definition'])) ?: [];
         $validTile = fn (string $tile): bool => preg_match('/^(C[0-8]|B[0-8]|D[1-9]|E[1-9]|O[0-3]|R[0-3]|S[0-3])$/', $tile) === 1;
@@ -43,7 +53,7 @@ class GladeController extends Controller
         $assignment = Assignment::create([
             ...$validated,
             'map_definition' => implode(' ', $tiles),
-            'costs' => $this->defaultCosts(),
+            'costs' => array_map('intval', $validated['costs']),
             'is_custom' => true,
             'is_active' => true,
         ]);
@@ -62,15 +72,5 @@ class GladeController extends Controller
         $tiles[378] = 'D1';
 
         return implode(' ', $tiles);
-    }
-
-    private function defaultCosts(): array
-    {
-        return [
-            'kompas' => 100, 'zwOogHardware' => 50, 'kleurOogHardware' => 200, 'variabele' => 30,
-            'stapVooruit' => 1, 'stapAchteruit' => 1, 'draaien' => 5, 'zwOog' => 10,
-            'kleurOog' => 20, 'duwen' => 100, 'toewijzing' => 2, 'operatie' => 2,
-            'vergelijking' => 2, 'zolang' => 50, 'als' => 40, 'opdracht' => 20, 'toekenning' => 10,
-        ];
     }
 }

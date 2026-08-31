@@ -327,9 +327,7 @@ class GladeSimulator
 
     private function command(string $command): void
     {
-        $runtimeCost = in_array($command, ['draaiLinks', 'draaiRechts'], true)
-            ? (int) ($this->costs['draaien'] ?? 5)
-            : (int) ($this->costs[$command] ?? 1);
+        $runtimeCost = (int) ($this->costs[$command] ?? $this->costs['draaien'] ?? 1);
         $this->charge($runtimeCost, $command);
 
         if ($command === 'draaiLinks') {
