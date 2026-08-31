@@ -12,6 +12,7 @@
 
 /*
  * Objects:
+ * O0: Spikes
  * O1: Bush
  * O2: Rock/Wall
  * O3: Wood
@@ -19,6 +20,14 @@
  * O5: Bonus
  * O6: Bomb
  */
+
+/* O0: Spikes */
+.tile-o[data-code="O0"]::before {
+    content: '';
+    width: 80%;
+    height: 80%;
+    background: url('/images/tiles/spikes.svg') center / contain no-repeat;
+}
 
 /* O1: Bush */
 .tile-o[data-code="O1"] {
