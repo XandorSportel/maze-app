@@ -10,42 +10,89 @@
  *   background: url('/images/tiles/steen.png') center / contain no-repeat;
  */
 
+/*
+ * Objects:
+ * O1: Bush
+ * O2: Rock/Wall
+ * O3: Wood
+ * O4: Turn
+ * O5: Bonus
+ * O6: Bomb
+ */
+
+/* O1: Bush */
+.tile-o[data-code="O1"] {
+    background: #28712f
+}
+
 .tile-o[data-code="O1"]::before {
-    content: '♣';
+    /* content: '♣'; */
+    content: '';
+    width: 80%;
+    height: 80%;
+    background: url('/images/tiles/bush.png') center / contain no-repeat;
     color: #143f18;
     text-shadow: 2px 2px #7b9b38;
 }
 
+/* O2: Rock/Wall */
 .tile-o[data-code="O2"]::before {
-    content: '●';
+    /* content: '●'; */
+    content: '';
+    width: 80%;
+    height: 80%;
+    background: url('/images/tiles/wall.png') center / contain no-repeat;
     color: #3d4540;
     text-shadow: 7px 4px #919891, -7px 4px #444b47;
 }
 
+/* O3: Wood */
+.tile-o[data-code="O3"] {
+    background: #8b5b38
+}
+
 .tile-o[data-code="O3"]::before {
-    content: '▰';
+    /* content: '▰'; */
+    content: '';
+    width: 80%;
+    height: 80%;
+    background: url('/images/tiles/wood.png') center / contain no-repeat;
     color: #57321f;
     transform: rotate(-28deg);
 }
 
+/* Goal */
 .tile-d::before {
-    content: '⌖';
+    /* content: '⌖'; */
+    content: '';
+    width: 80%;
+    height: 80%;
+    background: url('/images/tiles/goal.png') center / contain no-repeat;
     color: #17231f;
-    background: #fff;
-    border-radius: 50%;
 }
 
+/* O5: Bonus */
 .tile-e::before {
-    content: '✦';
+    /* content: '✦'; */
+    content: '';
+    width: 80%;
+    height: 80%;
+    background: url('/images/tiles/bonus.png') center / contain no-repeat;
     color: #ffe27a;
     text-shadow: 1px 1px #725000;
 }
 
+/* O4: Turn */
 .tile-r::before {
-    content: '↻';
+    /* content: '↻'; */
+    content: '';
+    width: 80%;
+    height: 80%;
+    background: url('/images/tiles/turn.png') center / contain no-repeat;
     color: #fff;
 }
 
+/* Start */
 .tile-s::before {
     content: '▲';
     color: #ff5247;
@@ -56,7 +103,12 @@
 .tile-s[data-code="S2"]::before { transform: rotate(180deg); }
 .tile-s[data-code="S3"]::before { transform: rotate(270deg); }
 
+/* O6: Bomb */
 .tile-b::before {
-    content: '✹';
+    /* content: '✹'; */
+    content: '';
+    width: 80%;
+    height: 80%;
+    background: url('/images/tiles/bomb.png') center / contain no-repeat;
     color: #111;
 }

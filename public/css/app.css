@@ -512,67 +512,6 @@ body {
 }
 
 /* Glade Map Tile Icons */
-.tile-o[data-code="O1"] {
-    background: #28712f
-}
-
-.tile-o[data-code="O1"]::before {
-    content: '♣';
-    color: #143f18;
-    text-shadow: 2px 2px #7b9b38
-}
-
-.tile-o[data-code="O2"]::before {
-    content: '●';
-    color: #3d4540;
-    text-shadow: 7px 4px #919891, -7px 4px #444b47
-}
-
-.tile-o[data-code="O3"] {
-    background: #8b5b38
-}
-
-.tile-o[data-code="O3"]::before {
-    content: '▰';
-    transform: rotate(-28deg);
-    color: #57321f
-}
-
-.tile-d::before {
-    content: '⌖';
-    font-size: clamp(15px, 2vw, 28px);
-    color: #17231f;
-    background: #fff;
-    border-radius: 50%
-}
-
-.tile-e::before {
-    content: '✦';
-    font-size: clamp(14px, 1.8vw, 25px);
-    color: #ffe27a;
-    text-shadow: 1px 1px #725000
-}
-
-.tile-r::before {
-    content: '↻';
-    font-size: clamp(14px, 2vw, 29px);
-    color: white
-}
-
-.tile-s::before {
-    content: '▲';
-    font-size: clamp(14px, 1.9vw, 27px);
-    color: #ff5247;
-    text-shadow: 0 2px #161d1a;
-    transform: rotate(calc(attr(data-code type(<number>), 0) * 90deg))
-}
-
-.tile-b::before {
-    content: '✹';
-    font-size: clamp(13px, 1.8vw, 24px);
-    color: #111
-}
-
 .robot {
     position: absolute;
     z-index: 5;
