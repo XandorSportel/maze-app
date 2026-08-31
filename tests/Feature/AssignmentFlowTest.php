@@ -105,8 +105,113 @@ CODE;
 
         $submission = Submission::firstOrFail();
         $this->assertSame('Doel bereikt', $submission->status);
-        $this->assertSame(270, $submission->total_cost);
-        $this->assertSame(9, $submission->final_state['variables']['i']);
+        $this->assertSame(264, $submission->total_cost);
+        $this->assertSame(8, $submission->final_state['variables']['i']);
+    }
+
+    public function test_official_coordinates_collision_and_leaving_the_glade_are_reported(): void
+    {
+        $tiles = array_fill(0, 400, 'C3');
+        $tiles[197] = 'S0';
+        $tiles[159] = 'O2';
+        $tiles[0] = 'D1';
+        $assignment = $this->assignmentWithTiles($tiles);
+        $commands = [
+            'stapVooruit',
+            'stapVooruit',
+            'draaiRechts',
+            'stapVooruit',
+            'stapVooruit',
+            'draaiRechts',
+            'stapVooruit',
+            'stapVooruit',
+            'draaiLinks',
+            'stapVooruit',
+            'stapVooruit',
+            ...array_fill(0, 15, 'stapVooruit'),
+        ];
+
+        $this->post(route('submissions.store', $assignment), ['code' => implode("\n", $commands)])->assertRedirect();
+
+        $submission = Submission::firstOrFail();
+        $this->assertSame('Uit de Glade gelopen', $submission->status);
+        $this->assertSame(0, $submission->remaining_budget);
+        $this->assertSame(2024, $submission->total_cost);
+        $this->assertContains('kosten opdracht: 26 * 20', $submission->execution_log);
+        $this->assertContains('kosten voor stap vooruit: 1 naar: [8,17]', $submission->execution_log);
+        $this->assertContains('steen verplaatsing naar [7,20] geblokkeerd', $submission->execution_log);
+        $this->assertContains('uitzondering: Uit the Glade gelopen! [9,20]', $submission->execution_log);
+        $this->assertContains('The rule says: "Don\'t enter the maze"', $submission->execution_log);
+    }
+
+    public function test_compass_hardware_can_be_declared_read_and_assigned(): void
+    {
+        $tiles = array_fill(0, 400, 'C3');
+        $tiles[390] = 'S0';
+        $tiles[370] = 'D1';
+        $assignment = $this->assignmentWithTiles($tiles);
+        $code = <<<'CODE'
+gebruik kompas
+gebruik k
+k = kompas
+stapVooruit
+CODE;
+
+        $this->post(route('submissions.store', $assignment), ['code' => $code])->assertRedirect();
+
+        $submission = Submission::firstOrFail();
+        $this->assertSame('Doel bereikt', $submission->status);
+        $this->assertSame(178, $submission->total_cost);
+        $this->assertSame(1846, $submission->remaining_budget);
+        $this->assertSame(0, $submission->final_state['variables']['k']);
+        $this->assertContains("kosten voor declaratie 'kompas': 100", $submission->execution_log);
+        $this->assertContains("kosten voor declaratie variabele 'k': 30", $submission->execution_log);
+        $this->assertContains('kosten voor gebruik kompas: 15', $submission->execution_log);
+        $this->assertContains('kosten voor het toewijzen van een waarde: 0 aan k: 2', $submission->execution_log);
+        $this->assertContains('kosten voor stap vooruit: 1 naar: [18,10]', $submission->execution_log);
+    }
+
+    public function test_color_eye_and_else_follow_language_20_syntax(): void
+    {
+        $tiles = array_fill(0, 400, 'C3');
+        $tiles[21] = 'S0';
+        $tiles[22] = 'D1';
+        $assignment = $this->assignmentWithTiles($tiles);
+        $code = <<<'CODE'
+gebruik kleurOog
+als kleurOog == 1 {
+draaiLinks
+} anders {
+draaiRechts
+}
+stapVooruit
+CODE;
+
+        $this->post(route('submissions.store', $assignment), ['code' => $code])->assertRedirect();
+
+        $submission = Submission::firstOrFail();
+        $this->assertSame('Doel bereikt', $submission->status);
+        $this->assertContains('kosten voor gebruik kleur-oog: 20', $submission->execution_log);
+        $this->assertContains('kosten voor het draaien naar rechts: 5', $submission->execution_log);
+        $this->assertNotContains('kosten voor het draaien naar links: 5', $submission->execution_log);
+    }
+
+    public function test_a_collision_costs_money_but_does_not_stop_the_program(): void
+    {
+        $tiles = array_fill(0, 400, 'C3');
+        $tiles[21] = 'S1';
+        $tiles[22] = 'O2';
+        $tiles[41] = 'D1';
+        $assignment = $this->assignmentWithTiles($tiles);
+        $code = "stapVooruit\ndraaiRechts\nstapVooruit";
+
+        $this->post(route('submissions.store', $assignment), ['code' => $code])->assertRedirect();
+
+        $submission = Submission::firstOrFail();
+        $this->assertSame('Doel bereikt', $submission->status);
+        $this->assertSame(166, $submission->total_cost);
+        $this->assertContains('kosten voor botsen / duwen: 100', $submission->execution_log);
+        $this->assertContains('kosten voor stap vooruit: 1 naar: [2,1]', $submission->execution_log);
     }
 
     public function test_assignments_can_be_searched_by_name_or_description(): void

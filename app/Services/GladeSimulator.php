@@ -9,6 +9,8 @@ class GladeSimulator
 {
     private const MAX_EXECUTIONS = 10000;
 
+    private const HARDWARE = ['kompas', 'zwOog', 'kleurOog'];
+
     private array $tiles;
 
     private array $costs;
@@ -23,11 +25,17 @@ class GladeSimulator
 
     private int $goal = 1;
 
+    private int $goalCount = 0;
+
     private int $executions = 0;
 
     private array $collected = [];
 
     private array $variables = [];
+
+    private array $hardware = [];
+
+    private array $armedBombs = [];
 
     private array $log = [];
 
@@ -44,17 +52,24 @@ class GladeSimulator
 
         try {
             $program = $this->parse($code);
-            $this->charge($this->compileCost($program), 'Compile- en aanschafkosten');
+            $this->purchaseProgram($program);
             $this->executeBlock($program);
         } catch (RuntimeException $exception) {
             $this->log[] = $exception->getMessage();
 
+            if ($this->haltStatus === 'Budget overschreden') {
+                $this->log[] = 'eind kapitaal: 0';
+            }
+
             return $this->result($this->haltStatus ?? 'Syntaxfout');
         }
 
-        $goalCount = count(array_filter($this->tiles, fn (string $tile): bool => str_starts_with($tile, 'D')));
-        $status = $this->haltStatus ?? ($this->goal > $goalCount ? 'Doel bereikt' : 'Programma afgerond, doel niet bereikt');
-        $this->log[] = "Eindkapitaal: €{$this->budget}.";
+        $status = $this->haltStatus ?? ($this->goal > $this->goalCount ? 'Doel bereikt' : 'Programma afgerond, doel niet bereikt');
+        $this->log[] = "eind kapitaal: {$this->budget}";
+
+        if ($status === 'Doel bereikt') {
+            $this->log[] = 'Doel bereikt binnen budget';
+        }
 
         return $this->result($status);
     }
@@ -74,21 +89,42 @@ class GladeSimulator
         $this->budget = $assignment->start_capital;
         $this->spent = 0;
         $this->goal = 1;
+        $this->goalCount = count(array_filter($this->tiles, fn (string $tile): bool => str_starts_with($tile, 'D')));
         $this->executions = 0;
         $this->collected = [];
         $this->variables = [];
-        $this->log = ["Startkapitaal: €{$this->budget}", 'Start op ['.($this->position % 20 + 1).', '.(intdiv($this->position, 20) + 1).'].'];
+        $this->hardware = [];
+        $this->armedBombs = [];
+        $this->log = ["start kapitaal: {$this->budget}"];
         $this->haltStatus = null;
     }
 
     private function parse(string $code): array
     {
-        $lines = array_values(array_filter(array_map('trim', preg_split('/\R/', $code) ?: []), fn (string $line): bool => $line !== ''));
+        $lines = [];
+
+        foreach (preg_split('/\R/', $code) ?: [] as $offset => $rawLine) {
+            $line = trim($rawLine);
+
+            if ($line === '') {
+                continue;
+            }
+
+            if (preg_match('/^}\s*anders\s*{$/', $line)) {
+                $lines[] = ['text' => '}', 'line' => $offset + 1];
+                $lines[] = ['text' => 'anders {', 'line' => $offset + 1];
+
+                continue;
+            }
+
+            $lines[] = ['text' => $line, 'line' => $offset + 1];
+        }
+
         $index = 0;
         $program = $this->parseBlock($lines, $index, false);
 
         if ($index < count($lines)) {
-            throw new RuntimeException('Onverwachte afsluitende accolade op regel '.($index + 1).'.');
+            throw new RuntimeException('Onverwachte afsluitende accolade op regel '.$lines[$index]['line'].'.');
         }
 
         return $program;
@@ -99,39 +135,48 @@ class GladeSimulator
         $statements = [];
 
         while ($index < count($lines)) {
-            $line = $lines[$index];
-            $lineNumber = $index + 1;
+            $line = $lines[$index]['text'];
+            $lineNumber = $lines[$index]['line'];
 
             if ($line === '}') {
                 if (! $expectsClosingBrace) {
                     return $statements;
                 }
+
                 $index++;
 
                 return $statements;
             }
 
-            if (preg_match('/^gebruik ([a-z])$/', $line, $match)) {
+            if (preg_match('/^gebruik\s+([a-z]|kompas|zwOog|kleurOog)$/', $line, $match)) {
                 $statements[] = ['type' => 'declaration', 'name' => $match[1], 'line' => $lineNumber];
                 $index++;
 
                 continue;
             }
 
-            if (preg_match('/^(zolang|als) (.+) \{$/', $line, $match)) {
+            if (preg_match('/^(zolang|als)\s+(.+)\s+{$/', $line, $match)) {
                 $index++;
-                $statements[] = [
-                    'type' => $match[1] === 'zolang' ? 'while' : 'if',
-                    'condition' => $match[2],
+                $type = $match[1] === 'zolang' ? 'while' : 'if';
+                $statement = [
+                    'type' => $type,
+                    'condition' => trim($match[2]),
                     'body' => $this->parseBlock($lines, $index, true),
                     'line' => $lineNumber,
                 ];
+
+                if ($type === 'if' && ($lines[$index]['text'] ?? null) === 'anders {') {
+                    $index++;
+                    $statement['else'] = $this->parseBlock($lines, $index, true);
+                }
+
+                $statements[] = $statement;
 
                 continue;
             }
 
             if (preg_match('/^([a-z])\s*=\s*(.+)$/', $line, $match)) {
-                $statements[] = ['type' => 'assignment', 'name' => $match[1], 'expression' => $match[2], 'line' => $lineNumber];
+                $statements[] = ['type' => 'assignment', 'name' => $match[1], 'expression' => trim($match[2]), 'line' => $lineNumber];
                 $index++;
 
                 continue;
@@ -154,22 +199,78 @@ class GladeSimulator
         return $statements;
     }
 
-    private function compileCost(array $statements): int
+    private function purchaseProgram(array $program): void
     {
-        $total = 0;
+        $analysis = [
+            'while' => 0,
+            'if' => 0,
+            'command' => 0,
+            'assignment' => 0,
+            'declarations' => [],
+        ];
+        $this->analyseProgram($program, $analysis);
 
-        foreach ($statements as $statement) {
-            $total += match ($statement['type']) {
-                'declaration' => (int) ($this->costs['variabele'] ?? 30),
-                'assignment' => (int) ($this->costs['toekenning'] ?? 10),
-                'command' => (int) ($this->costs['opdracht'] ?? 20),
-                'while' => (int) ($this->costs['zolang'] ?? 50) + $this->compileCost($statement['body']),
-                'if' => (int) ($this->costs['als'] ?? 40) + $this->compileCost($statement['body']),
-                default => 0,
-            };
+        foreach ([
+            ['while', 'zolang', 'zolang'],
+            ['if', 'als', 'als'],
+            ['command', 'opdracht', 'opdracht'],
+            ['assignment', 'toekenning', 'toekenning'],
+        ] as [$countKey, $costKey, $label]) {
+            $count = $analysis[$countKey];
+            $cost = (int) ($this->costs[$costKey] ?? 0);
+            $this->recordCost("kosten {$label}: {$count} * {$cost}", $count * $cost);
         }
 
-        return $total;
+        foreach ($analysis['declarations'] as $declaration) {
+            $name = $declaration['name'];
+
+            if (in_array($name, self::HARDWARE, true)) {
+                if (in_array($name, $this->hardware, true)) {
+                    throw new RuntimeException("Regel {$declaration['line']}: hardware {$name} is al gedeclareerd.");
+                }
+
+                $costKey = match ($name) {
+                    'kompas' => 'kompas',
+                    'zwOog' => 'zwOogHardware',
+                    'kleurOog' => 'kleurOogHardware',
+                };
+                $cost = (int) ($this->costs[$costKey] ?? 0);
+                $this->recordCost("kosten voor declaratie '{$name}': {$cost}", $cost);
+                $this->hardware[] = $name;
+
+                continue;
+            }
+
+            if (array_key_exists($name, $this->variables)) {
+                throw new RuntimeException("Regel {$declaration['line']}: variabele {$name} is al gedeclareerd.");
+            }
+
+            $cost = (int) ($this->costs['variabele'] ?? 30);
+            $this->recordCost("kosten voor declaratie variabele '{$name}': {$cost}", $cost);
+            $this->variables[$name] = 0;
+        }
+    }
+
+    private function analyseProgram(array $statements, array &$analysis): void
+    {
+        foreach ($statements as $statement) {
+            match ($statement['type']) {
+                'declaration' => $analysis['declarations'][] = $statement,
+                'assignment' => $analysis['assignment']++,
+                'command' => $analysis['command']++,
+                'while' => $analysis['while']++,
+                'if' => $analysis['if']++,
+                default => null,
+            };
+
+            if (isset($statement['body'])) {
+                $this->analyseProgram($statement['body'], $analysis);
+            }
+
+            if (isset($statement['else'])) {
+                $this->analyseProgram($statement['else'], $analysis);
+            }
+        }
     }
 
     private function executeBlock(array $statements): void
@@ -182,7 +283,7 @@ class GladeSimulator
             $this->guardExecutionLimit();
 
             match ($statement['type']) {
-                'declaration' => $this->declare($statement),
+                'declaration' => null,
                 'assignment' => $this->assign($statement),
                 'command' => $this->command($statement['command']),
                 'if' => $this->conditional($statement),
@@ -192,31 +293,25 @@ class GladeSimulator
         }
     }
 
-    private function declare(array $statement): void
-    {
-        if (array_key_exists($statement['name'], $this->variables)) {
-            throw new RuntimeException("Regel {$statement['line']}: variabele {$statement['name']} is al gedeclareerd.");
-        }
-
-        $this->variables[$statement['name']] = 0;
-        $this->log[] = "Variabele {$statement['name']} geïnitialiseerd.";
-    }
-
     private function assign(array $statement): void
     {
         $this->requireVariable($statement['name'], $statement['line']);
         [$value, $operations] = $this->evaluateArithmetic($statement['expression'], $statement['line']);
-        $runtimeCost = (int) ($this->costs['toewijzing'] ?? 2) + ($operations * (int) ($this->costs['operatie'] ?? 2));
-        $this->charge($runtimeCost, "Toekenning {$statement['name']}");
+        $this->chargeOperations($operations);
+        $cost = (int) ($this->costs['toewijzing'] ?? 2);
+        $this->recordCost("kosten voor het toewijzen van een waarde: {$value} aan {$statement['name']}: {$cost}", $cost);
         $this->variables[$statement['name']] = $value;
-        $this->log[] = "{$statement['name']} = {$value}.";
     }
 
     private function conditional(array $statement): void
     {
         if ($this->evaluateCondition($statement['condition'], $statement['line'])) {
             $this->executeBlock($statement['body']);
+
+            return;
         }
+
+        $this->executeBlock($statement['else'] ?? []);
     }
 
     private function loop(array $statement): void
@@ -229,32 +324,32 @@ class GladeSimulator
 
     private function evaluateCondition(string $condition, int $line): bool
     {
-        if (! preg_match('/^(.+?)\s*(==|!=|<=|>=|<|>)\s*(.+)$/', $condition, $match)) {
+        if (! preg_match('/^(.+?)\s*(==|!=|<|>)\s*(.+)$/', $condition, $match)) {
             throw new RuntimeException("Regel {$line}: ongeldige vergelijking '{$condition}'.");
         }
 
         [$left, $leftOperations] = $this->evaluateArithmetic($match[1], $line);
         [$right, $rightOperations] = $this->evaluateArithmetic($match[3], $line);
-        $cost = (int) ($this->costs['vergelijking'] ?? 2) + (($leftOperations + $rightOperations) * (int) ($this->costs['operatie'] ?? 2));
-        $this->charge($cost, "Vergelijking {$condition}");
+        $this->chargeOperations($leftOperations + $rightOperations);
+        $cost = (int) ($this->costs['vergelijking'] ?? 2);
+        $this->recordCost("kosten voor het vergelijken: {$cost}", $cost);
 
         return match ($match[2]) {
             '==' => $left === $right,
             '!=' => $left !== $right,
             '<' => $left < $right,
             '>' => $left > $right,
-            '<=' => $left <= $right,
-            '>=' => $left >= $right,
         };
     }
 
     /** @return array{0:int,1:int} */
     private function evaluateArithmetic(string $expression, int $line): array
     {
-        preg_match_all('/\d+|[a-z]|[+\-*\/%]/', str_replace(' ', '', $expression), $matches);
+        $compactExpression = preg_replace('/\s+/', '', $expression) ?? '';
+        preg_match_all('/kleurOog|zwOog|kompas|\d+|[a-z]|[+\-*\/%]/', $compactExpression, $matches);
         $tokens = $matches[0];
 
-        if ($tokens === [] || implode('', $tokens) !== str_replace(' ', '', $expression)) {
+        if ($tokens === [] || implode('', $tokens) !== $compactExpression) {
             throw new RuntimeException("Regel {$line}: ongeldige expressie '{$expression}'.");
         }
 
@@ -264,10 +359,11 @@ class GladeSimulator
 
         foreach ($tokens as $index => $token) {
             if ($index % 2 === 0) {
-                if (! preg_match('/^(\d+|[a-z])$/', $token)) {
+                if (! preg_match('/^(\d+|[a-z]|kleurOog|zwOog|kompas)$/', $token)) {
                     throw new RuntimeException("Regel {$line}: ongeldige expressie '{$expression}'.");
                 }
-                $values[] = ctype_digit($token) ? (int) $token : $this->variableValue($token, $line);
+
+                $values[] = $this->operandValue($token, $line);
 
                 continue;
             }
@@ -293,6 +389,54 @@ class GladeSimulator
         return [$values[0], intdiv(count($tokens), 2)];
     }
 
+    private function operandValue(string $operand, int $line): int
+    {
+        if (ctype_digit($operand)) {
+            return (int) $operand;
+        }
+
+        if (in_array($operand, self::HARDWARE, true)) {
+            return $this->readHardware($operand, $line);
+        }
+
+        return $this->variableValue($operand, $line);
+    }
+
+    private function readHardware(string $name, int $line): int
+    {
+        if (! in_array($name, $this->hardware, true)) {
+            throw new RuntimeException("Regel {$line}: hardware {$name} is niet geïnitialiseerd met 'gebruik {$name}'.");
+        }
+
+        $costKey = $name === 'kompas' ? 'kompasVerbruik' : $name;
+        $cost = (int) ($this->costs[$costKey] ?? 0);
+        $label = match ($name) {
+            'kompas' => 'kompas',
+            'zwOog' => 'zwart-wit-oog',
+            'kleurOog' => 'kleur-oog',
+        };
+        $this->recordCost("kosten voor gebruik {$label}: {$cost}", $cost);
+
+        if ($name === 'kompas') {
+            return $this->direction;
+        }
+
+        $color = $this->tileColor($this->tiles[$this->position]);
+
+        return $name === 'zwOog' ? (int) ($color !== 0) : $color;
+    }
+
+    private function tileColor(string $tile): int
+    {
+        return match ($tile[0]) {
+            'C' => (int) $tile[1],
+            'D', 'E' => 4,
+            'R' => 2,
+            'S', 'B' => 0,
+            default => 3,
+        };
+    }
+
     private function applyOperator(array &$values, string $operator, int $line): void
     {
         $right = array_pop($values);
@@ -311,6 +455,15 @@ class GladeSimulator
         };
     }
 
+    private function chargeOperations(int $operations): void
+    {
+        $cost = (int) ($this->costs['operatie'] ?? 2);
+
+        for ($operation = 0; $operation < $operations; $operation++) {
+            $this->recordCost("kosten voor het rekenen: {$cost}", $cost);
+        }
+    }
+
     private function variableValue(string $name, int $line): int
     {
         $this->requireVariable($name, $line);
@@ -327,75 +480,225 @@ class GladeSimulator
 
     private function command(string $command): void
     {
-        $runtimeCost = (int) ($this->costs[$command] ?? $this->costs['draaien'] ?? 1);
-        $this->charge($runtimeCost, $command);
+        $armedAtStart = array_keys($this->armedBombs);
 
-        if ($command === 'draaiLinks') {
-            $this->direction = ($this->direction + 3) % 4;
-            $this->log[] = 'Draai links.';
+        if ($command === 'draaiLinks' || $command === 'draaiRechts') {
+            $cost = (int) ($this->costs[$command] ?? $this->costs['draaien'] ?? 1);
+            $label = $command === 'draaiLinks' ? 'links' : 'rechts';
+            $this->recordCost("kosten voor het draaien naar {$label}: {$cost}", $cost);
+            $this->direction = ($this->direction + ($command === 'draaiLinks' ? 3 : 1)) % 4;
 
-            return;
-        }
+            if (str_starts_with($this->tiles[$this->position], 'R')) {
+                $this->applyRotationTile($this->tiles[$this->position]);
+            }
 
-        if ($command === 'draaiRechts') {
-            $this->direction = ($this->direction + 1) % 4;
-            $this->log[] = 'Draai rechts.';
+            $this->advanceBombs($armedAtStart);
 
             return;
         }
 
         $stepDirection = $command === 'stapAchteruit' ? ($this->direction + 2) % 4 : $this->direction;
-        $next = $this->position + [-20, 1, 20, -1][$stepDirection];
-        $wraps = $next >= 0 && $next < 400 && abs(($next % 20) - ($this->position % 20)) > 1;
+        [$row, $column] = $this->coordinates($this->position);
+        [$rowDelta, $columnDelta] = [[-1, 0], [0, 1], [1, 0], [0, -1]][$stepDirection];
+        $nextRow = $row + $rowDelta;
+        $nextColumn = $column + $columnDelta;
 
-        if ($next < 0 || $next >= 400 || $wraps || str_starts_with($this->tiles[$next], 'O')) {
-            $this->log[] = 'Botsing vanaf ['.($this->position % 20 + 1).', '.(intdiv($this->position, 20) + 1).'].';
-            $this->haltStatus = 'Gebotst op een obstakel';
+        if (! $this->inside($nextRow, $nextColumn)) {
+            $this->leaveGlade($nextRow, $nextColumn);
 
             return;
         }
 
-        $this->position = $next;
-        $tile = $this->tiles[$this->position];
-        $this->log[] = 'Stap naar ['.($this->position % 20 + 1).', '.(intdiv($this->position, 20) + 1)."] ({$tile}).";
+        $next = $nextRow * 20 + $nextColumn;
 
-        if (str_starts_with($tile, 'B')) {
-            $this->haltStatus = 'Bom geraakt';
+        if (str_starts_with($this->tiles[$next], 'O')) {
+            $this->collideWithObstacle($next, $stepDirection, $command);
+            $this->advanceBombs($armedAtStart);
 
             return;
+        }
+
+        $this->completeStep($next, $command);
+        $this->advanceBombs($armedAtStart);
+    }
+
+    private function collideWithObstacle(int $obstaclePosition, int $direction, string $command): void
+    {
+        $obstacle = $this->tiles[$obstaclePosition];
+        $collisionCost = (int) ($this->costs['duwen'] ?? 100);
+        $this->recordCost("kosten voor botsen / duwen: {$collisionCost}", $collisionCost);
+
+        [$row, $column] = $this->coordinates($obstaclePosition);
+        [$rowDelta, $columnDelta] = [[-1, 0], [0, 1], [1, 0], [0, -1]][$direction];
+        $targetRow = $row + $rowDelta;
+        $targetColumn = $column + $columnDelta;
+        $name = ['puin', 'heg', 'steen', 'hout'][(int) $obstacle[1]] ?? 'obstakel';
+
+        if ($obstacle !== 'O3') {
+            $this->log[] = "{$name} verplaatsing naar [{$targetRow},{$targetColumn}] geblokkeerd";
+
+            return;
+        }
+
+        if (! $this->inside($targetRow, $targetColumn)) {
+            $this->tiles[$obstaclePosition] = 'C3';
+            $this->log[] = 'hout uit the Glade geduwd.';
+            $this->completeStep($obstaclePosition, $command);
+
+            return;
+        }
+
+        $target = $targetRow * 20 + $targetColumn;
+
+        if (! in_array($this->tiles[$target][0], ['C', 'S', 'D', 'E'], true)) {
+            $this->log[] = "hout verplaatsing naar [{$targetRow},{$targetColumn}] geblokkeerd";
+
+            return;
+        }
+
+        $this->tiles[$target] = 'O3';
+        $this->tiles[$obstaclePosition] = 'C3';
+        $this->log[] = "hout verplaatst naar [{$targetRow},{$targetColumn}]";
+        $this->completeStep($obstaclePosition, $command);
+    }
+
+    private function completeStep(int $next, string $command): void
+    {
+        $cost = (int) ($this->costs[$command] ?? 1);
+        [$row, $column] = $this->coordinates($next);
+        $label = $command === 'stapAchteruit' ? 'achteruit' : 'vooruit';
+        $this->recordCost("kosten voor stap {$label}: {$cost} naar: [{$row},{$column}]", $cost);
+        $this->position = $next;
+        $this->applyTile($this->tiles[$this->position]);
+    }
+
+    private function applyTile(string $tile): void
+    {
+        if (str_starts_with($tile, 'B')) {
+            $delay = (int) $tile[1];
+
+            if ($delay === 0) {
+                $this->explodeBomb($this->position);
+
+                return;
+            }
+
+            $this->armedBombs[$this->position] = $delay;
         }
 
         if (str_starts_with($tile, 'R')) {
-            $this->direction = ($this->direction + (int) substr($tile, 1, 1)) % 4;
-            $this->log[] = "Draaischijf {$tile} activeert.";
+            $this->applyRotationTile($tile);
         }
 
         if (str_starts_with($tile, 'E') && ! in_array($tile, $this->collected, true)) {
-            $bonus = 2 ** (int) substr($tile, 1, 1);
+            $bonus = 2 ** (int) $tile[1];
             $this->budget += $bonus;
             $this->collected[] = $tile;
-            $this->log[] = "Bonus {$tile}: +€{$bonus}.";
+            $this->tiles[$this->position] = 'C4';
+            $this->log[] = "bonus van {$bonus} gepakt.";
         }
 
         if ($tile === "D{$this->goal}") {
-            $this->log[] = "Doel {$this->goal} bereikt.";
+            [$row, $column] = $this->coordinates($this->position);
+            $this->log[] = "doel [{$row}, {$column}] bereikt.";
             $this->goal++;
+
+            if ($this->goal > $this->goalCount) {
+                $this->haltStatus = 'Doel bereikt';
+            }
         }
     }
 
-    private function charge(int $amount, string $reason): void
+    private function applyRotationTile(string $tile): void
     {
-        $this->budget -= $amount;
-        $this->spent += $amount;
+        $rotation = (int) $tile[1];
 
-        if ($amount > 0) {
-            $this->log[] = "{$reason}: -€{$amount}.";
+        if ($rotation === 0) {
+            $this->direction = random_int(0, 3);
+            $this->log[] = "nieuwe willekeurige richting = {$this->direction}";
+
+            return;
         }
 
-        if ($this->budget < 0) {
-            $this->haltStatus = 'Budget overschreden';
-            throw new RuntimeException('Het beschikbare budget is overschreden.');
+        $this->direction = ($this->direction + $rotation) % 4;
+    }
+
+    private function advanceBombs(array $armedAtStart): void
+    {
+        foreach ($armedAtStart as $position) {
+            if (! isset($this->armedBombs[$position])) {
+                continue;
+            }
+
+            $this->armedBombs[$position]--;
+
+            if ($this->armedBombs[$position] <= 0) {
+                $this->explodeBomb($position);
+            }
         }
+    }
+
+    private function explodeBomb(int $position): void
+    {
+        unset($this->armedBombs[$position]);
+        $this->tiles[$position] = 'O0';
+        [$row, $column] = $this->coordinates($position);
+        $this->log[] = "bom op [{$row},{$column}] ontploft.";
+
+        if ($this->position === $position) {
+            $this->forfeitBudget();
+            $this->haltStatus = 'Bom geraakt';
+        }
+    }
+
+    private function leaveGlade(int $row, int $column): void
+    {
+        $this->log[] = "uitzondering: Uit the Glade gelopen! [{$row},{$column}]";
+        $this->log[] = 'The rule says: "Don\'t enter the maze"';
+        $this->forfeitBudget();
+        $this->haltStatus = 'Uit de Glade gelopen';
+    }
+
+    private function forfeitBudget(): void
+    {
+        if ($this->budget > 0) {
+            $this->spent += $this->budget;
+        }
+
+        $this->budget = 0;
+    }
+
+    private function recordCost(string $message, int $amount): void
+    {
+        $this->log[] = $message;
+        $this->charge($amount);
+    }
+
+    private function charge(int $amount): void
+    {
+        if ($amount <= $this->budget) {
+            $this->budget -= $amount;
+            $this->spent += $amount;
+
+            return;
+        }
+
+        $this->spent += max(0, $this->budget);
+        $this->budget = 0;
+        $this->haltStatus = 'Budget overschreden';
+
+        throw new RuntimeException('Het beschikbare budget is overschreden.');
+    }
+
+    /** @return array{0:int,1:int} */
+    private function coordinates(int $position): array
+    {
+        return [intdiv($position, 20), $position % 20];
+    }
+
+    private function inside(int $row, int $column): bool
+    {
+        return $row >= 0 && $row < 20 && $column >= 0 && $column < 20;
     }
 
     private function guardExecutionLimit(): void
@@ -421,6 +724,8 @@ class GladeSimulator
                 'goal' => $this->goal,
                 'collected' => $this->collected,
                 'variables' => $this->variables,
+                'hardware' => $this->hardware,
+                'tiles' => $this->tiles,
             ],
         ];
     }
