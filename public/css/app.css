@@ -1096,6 +1096,12 @@ footer strong {
     margin-top: 20px
 }
 
+.pagination svg {
+    display: block;
+    width: 18px;
+    height: 18px
+}
+
 @media(max-width:900px) {
     .topbar {
         padding: 0 18px

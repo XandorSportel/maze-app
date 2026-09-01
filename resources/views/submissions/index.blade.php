@@ -40,6 +40,8 @@
             </tbody>
         </table>
     </div>
-    {{ $submissions->links() }}
+    <div class="pagination">
+        {{ $submissions->links() }}
+    </div>
 </section>
 @endsection

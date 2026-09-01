@@ -360,6 +360,20 @@ CODE;
             ->assertSeeInOrder([$cheap->assignment->name, $expensive->assignment->name]);
     }
 
+    public function test_submission_pagination_uses_the_sized_navigation_container(): void
+    {
+        $assignment = $this->assignment();
+
+        foreach (range(1, 16) as $index) {
+            $this->storedSubmission($assignment, $index, 2024 - $index, "2026-08-01 10:00:{$index}");
+        }
+
+        $this->get(route('submissions.index'))
+            ->assertOk()
+            ->assertSee('class="pagination"', false)
+            ->assertSee('page=2', false);
+    }
+
     private function assignment(): Assignment
     {
         $tiles = array_fill(0, 400, 'C3');
