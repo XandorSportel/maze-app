@@ -21,7 +21,7 @@
         @csrf
         <div class="editor">
             <div class="editor-bar"><span><i></i><i></i><i></i></span><b>oplossing.20</b><small id="lineCount">1 regel</small></div>
-            <div class="editor-body"><pre id="lineNumbers">1</pre><textarea id="code" name="code" spellcheck="false" required>{{ old('code', "stapVooruit\nstapVooruit\nstapVooruit\nstapVooruit\ndraaiRechts\nstapVooruit") }}</textarea></div>
+            <div class="editor-body"><pre id="lineNumbers">1</pre><textarea id="code" name="code" spellcheck="false" required>moi</textarea></div>
             <div class="editor-footer"><span>Ook beschikbaar: variabelen, hardware, als/anders, zolang en + − * / %</span><button class="button primary" type="submit">▶ Uitvoeren en opslaan</button></div>
         </div>
         <aside class="run-help"><span class="run-icon">⌘</span><h3>Taal 20</h3><p>De code wordt door de Laravel-server gecontroleerd en uitgevoerd. Daarna zie je de status, totale kosten, variabelen en het volledige logboek.</p><ul><li>Declareer met <code>gebruik i</code> of bijvoorbeeld <code>gebruik kompas</code>.</li><li>Hardware: <code>kompas</code>, <code>zwOog</code> en <code>kleurOog</code>.</li><li>Gebruik <code>als i == 5 {</code>, <code>anders {</code> en <code>zolang i &lt; 9 {</code>.</li><li>Oneindige lussen stoppen na 10.000 stappen.</li></ul></aside>
