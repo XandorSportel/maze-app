@@ -1,4 +1,4 @@
-@props(['defaults'])
+@props(['defaults', 'values' => []])
 
 @php
     $groups = [
@@ -35,7 +35,7 @@
         <section class="editable-cost-column">
             <h3>{{ $group }} <small>{{ $group === 'Hardware' ? 'eenmalige aanschaf' : ($group === 'Software' ? 'per geschreven statement' : 'per uitvoering') }}</small></h3>
             @foreach($items as $key => $label)
-                @php($value = old("costs.{$key}", $defaults[$key]))
+                @php($value = old("costs.{$key}", $values[$key] ?? $defaults[$key]))
                 <label class="cost-input-row {{ (int) $value !== (int) $defaults[$key] ? 'changed' : '' }}">
                     <span>{{ $label }}</span>
                     <span class="cost-input"><b>€</b><input type="number" min="0" max="1000000" name="costs[{{ $key }}]" value="{{ $value }}" data-default-cost="{{ $defaults[$key] }}" required></span>

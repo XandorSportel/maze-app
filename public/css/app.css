@@ -340,6 +340,10 @@ body {
     line-height: 1.65
 }
 
+.detail-actions {
+    margin-top: 22px
+}
+
 .back-link {
     display: block;
     margin-bottom: 32px;

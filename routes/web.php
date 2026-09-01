@@ -16,3 +16,5 @@ Route::get('/gemaakte-opdrachten/{submission}', [SubmissionController::class, 's
 
 Route::get('/glades/maken', [GladeController::class, 'create'])->name('glades.create');
 Route::post('/glades', [GladeController::class, 'store'])->name('glades.store');
+Route::get('/glades/{assignment}/bewerken', [GladeController::class, 'edit'])->name('glades.edit');
+Route::put('/glades/{assignment}', [GladeController::class, 'update'])->name('glades.update');

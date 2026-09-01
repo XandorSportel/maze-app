@@ -21,8 +21,37 @@ class GladeController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $validated = $this->validateGlade($request);
+
+        $assignment = Assignment::create([
+            ...$validated,
+            'is_custom' => true,
+            'is_active' => true,
+        ]);
+
+        return redirect()->route('assignments.show', $assignment)->with('success', 'De glade is aangemaakt.');
+    }
+
+    public function edit(Assignment $assignment): View
+    {
+        return view('glades.create', [
+            'assignment' => $assignment,
+            'defaultMap' => $assignment->map_definition,
+            'defaultCosts' => config('glade.default_costs'),
+        ]);
+    }
+
+    public function update(Request $request, Assignment $assignment): RedirectResponse
+    {
+        $assignment->update($this->validateGlade($request, $assignment));
+
+        return redirect()->route('assignments.show', $assignment)->with('success', 'De glade is bijgewerkt.');
+    }
+
+    private function validateGlade(Request $request, ?Assignment $assignment = null): array
+    {
         $rules = [
-            'name' => ['required', 'string', 'max:100', Rule::unique('assignments', 'name')],
+            'name' => ['required', 'string', 'max:100', Rule::unique('assignments', 'name')->ignore($assignment)],
             'description' => ['nullable', 'string', 'max:1000'],
             'map_definition' => ['required', 'string'],
             'start_capital' => ['required', 'integer', 'min:1', 'max:1000000'],
@@ -50,15 +79,11 @@ class GladeController extends Controller
             throw ValidationException::withMessages(['map_definition' => 'Plaats minimaal één doeltegel.']);
         }
 
-        $assignment = Assignment::create([
+        return [
             ...$validated,
             'map_definition' => implode(' ', $tiles),
             'costs' => array_map('intval', $validated['costs']),
-            'is_custom' => true,
-            'is_active' => true,
-        ]);
-
-        return redirect()->route('assignments.show', $assignment)->with('success', 'De glade is aangemaakt.');
+        ];
     }
 
     private function defaultMap(): string

@@ -63,6 +63,47 @@ class AssignmentFlowTest extends TestCase
         $this->assertDatabaseHas('assignments', ['name' => 'Mijn Glade', 'is_custom' => true]);
     }
 
+    public function test_a_custom_glade_can_be_edited(): void
+    {
+        $assignment = $this->assignment();
+        $assignment->update(['is_custom' => true]);
+        $tiles = $assignment->tiles();
+        $tiles[22] = 'C3';
+        $tiles[23] = 'D2';
+        $costs = config('glade.default_costs');
+        $costs['stapVooruit'] = 99;
+
+        $this->get(route('glades.edit', $assignment))
+            ->assertOk()
+            ->assertSee('Pas je glade aan.')
+            ->assertSee($assignment->name);
+
+        $this->put(route('glades.update', $assignment), [
+            'name' => 'Gewijzigde Glade',
+            'description' => 'Nieuwe uitleg.',
+            'start_capital' => 5000,
+            'map_definition' => implode(' ', $tiles),
+            'costs' => $costs,
+        ])->assertRedirect(route('assignments.show', $assignment));
+
+        $assignment->refresh();
+        $this->assertSame('Gewijzigde Glade', $assignment->name);
+        $this->assertSame('Nieuwe uitleg.', $assignment->description);
+        $this->assertSame(5000, $assignment->start_capital);
+        $this->assertSame('D2', $assignment->tiles()[23]);
+        $this->assertSame(99, $assignment->costs['stapVooruit']);
+    }
+
+    public function test_a_sandbox_assignment_can_also_be_edited_as_a_glade(): void
+    {
+        $assignment = $this->assignment();
+
+        $this->get(route('glades.edit', $assignment))
+            ->assertOk()
+            ->assertSee('Pas je glade aan.');
+        $this->get(route('assignments.show', $assignment))->assertSee('Glade bewerken');
+    }
+
     public function test_custom_costs_and_start_capital_are_saved_used_and_highlighted(): void
     {
         $tiles = array_fill(0, 400, 'C3');
