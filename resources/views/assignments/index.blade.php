@@ -5,7 +5,7 @@
 @section('content')
 <section class="page-hero compact">
     <div><span class="eyebrow">Sandboxomgeving</span><h1>Openstaande<br><em>opdrachten.</em></h1></div>
-    <div class="hero-aside"><p>Kies een glade, programmeer je griever en probeer een zo hoog mogelijke score neer te zetten. Je kunt iedere opdracht zo vaak opnieuw maken als je wilt.</p><a class="button secondary" href="{{ route('glades.create') }}">+ Eigen glade maken</a></div>
+    <div class="hero-aside"><p>Kies een glade, programmeer je griever en probeer een zo hoog mogelijke score neer te zetten. Je kunt iedere opdracht zo vaak opnieuw maken als je wilt.</p><div class="hero-actions"><a class="button secondary" href="{{ route('glades.create') }}">+ Eigen glade maken</a><a class="button secondary" href="{{ route('glades.import.create') }}">▧ Screenshot importeren</a></div></div>
 </section>
 
 <section class="content-section">

@@ -1,17 +1,21 @@
 @extends('layouts.app')
 
 @php($editing = isset($assignment))
+@php($importing = isset($importWarnings))
 
 @section('title', ($editing ? 'Glade bewerken' : 'Glade maken').' · A-Mazing 20')
 
 @section('content')
 <section class="detail-header builder-header">
-    <div><a class="back-link" href="{{ $editing ? route('assignments.show', $assignment) : route('assignments.index') }}">← {{ $editing ? 'Terug naar de opdracht' : 'Alle opdrachten' }}</a><span class="eyebrow">Glade-ontwerper</span><h1>{{ $editing ? 'Pas je glade aan.' : 'Bouw je eigen glade.' }}</h1><p>Selecteer een tegel en schilder de 20×20-kaart. Iedere glade heeft precies één starttegel en minimaal één doel nodig.</p></div>
+    <div><a class="back-link" href="{{ $editing ? route('assignments.show', $assignment) : route('assignments.index') }}">← {{ $editing ? 'Terug naar de opdracht' : 'Alle opdrachten' }}</a><span class="eyebrow">Glade-ontwerper</span><h1>{{ $editing ? 'Pas je glade aan.' : ($importing ? 'Controleer de import.' : 'Bouw je eigen glade.') }}</h1><p>{{ $importing ? 'De screenshot is omgezet naar tegels. Controleer vooral de genummerde objecten en pas de kaart aan waar nodig.' : 'Selecteer een tegel en schilder de 20×20-kaart. Iedere glade heeft precies één starttegel en minimaal één doel nodig.' }}</p></div>
     <div class="header-facts"><div><span>Formaat</span><strong>20 × 20</strong></div><div><span>Geselecteerd</span><strong id="selectedCode">C3</strong></div></div>
 </section>
 
 <section class="content-section builder-section">
     @if ($errors->any())<div class="validation"><strong>De glade kon niet worden opgeslagen.</strong> {{ $errors->first() }}</div>@endif
+    @if($importing)
+        <div class="import-notice"><strong>Screenshot herkend.</strong><span>De kaart staat nog niet in de database. Controleer en sla hem onderaan deze pagina op.</span>@if($importWarnings)<ul>@foreach($importWarnings as $warning)<li>{{ $warning }}</li>@endforeach</ul>@endif</div>
+    @endif
     <form id="gladeForm" method="post" action="{{ $editing ? route('glades.update', $assignment) : route('glades.store') }}">
         @csrf
         @if($editing) @method('PUT') @endif
