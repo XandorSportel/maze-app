@@ -27,6 +27,13 @@ function paint(tile) {
             oldStart.querySelector('span').textContent = '3';
         });
     }
+    if (selected.startsWith('D')) {
+        map.querySelectorAll(`[data-code="${selected}"]`).forEach(oldGoal => {
+            oldGoal.dataset.code = 'C3';
+            oldGoal.className = classesFor('C3');
+            oldGoal.querySelector('span').textContent = '3';
+        });
+    }
     tile.dataset.code = selected;
     tile.className = classesFor(selected);
     tile.querySelector('span').textContent = selected.slice(1);

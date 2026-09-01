@@ -26,7 +26,11 @@ class AssignmentFlowTest extends TestCase
             ->assertSee('data-tile="E1"', false)
             ->assertSee('data-tile="E9"', false)
             ->assertSee('data-tile="B0"', false)
-            ->assertSee('data-tile="B8"', false);
+            ->assertSee('data-tile="B8"', false)
+            ->assertSee('data-tile="R0"', false)
+            ->assertSee('data-tile="R3"', false)
+            ->assertSee('data-tile="D1"', false)
+            ->assertSee('data-tile="D9"', false);
     }
 
     public function test_each_run_is_stored_as_a_new_submission_with_calculated_costs(): void
@@ -61,6 +65,23 @@ class AssignmentFlowTest extends TestCase
         ])->assertRedirect();
 
         $this->assertDatabaseHas('assignments', ['name' => 'Mijn Glade', 'is_custom' => true]);
+    }
+
+    public function test_the_same_goal_cannot_be_added_more_than_once(): void
+    {
+        $tiles = array_fill(0, 400, 'C3');
+        $tiles[21] = 'S1';
+        $tiles[22] = 'D1';
+        $tiles[23] = 'D1';
+
+        $this->post(route('glades.store'), [
+            'name' => 'Dubbel doel',
+            'start_capital' => 2024,
+            'map_definition' => implode(' ', $tiles),
+            'costs' => config('glade.default_costs'),
+        ])->assertSessionHasErrors('map_definition');
+
+        $this->assertDatabaseMissing('assignments', ['name' => 'Dubbel doel']);
     }
 
     public function test_a_custom_glade_can_be_edited(): void

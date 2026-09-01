@@ -75,8 +75,14 @@ class GladeController extends Controller
             throw ValidationException::withMessages(['map_definition' => 'Plaats precies één starttegel.']);
         }
 
-        if (! collect($tiles)->contains(fn (string $tile): bool => str_starts_with($tile, 'D'))) {
+        $goals = collect($tiles)->filter(fn (string $tile): bool => str_starts_with($tile, 'D'));
+
+        if ($goals->isEmpty()) {
             throw ValidationException::withMessages(['map_definition' => 'Plaats minimaal één doeltegel.']);
+        }
+
+        if ($goals->duplicates()->isNotEmpty()) {
+            throw ValidationException::withMessages(['map_definition' => 'Ieder doel (D1 t/m D9) mag maar één keer voorkomen.']);
         }
 
         return [

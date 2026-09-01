@@ -20,10 +20,12 @@
                 <h2>Tegelpalet</h2><p>Kies een tegel en klik of sleep over het veld.</p>
                 <div class="palette-groups">
                     <fieldset><legend>Kleuren</legend><div class="swatches">@foreach(range(0, 8) as $color)<button type="button" class="palette-button color-{{ $color }} {{ $color === 3 ? 'selected' : '' }}" data-tile="C{{ $color }}">C{{ $color }}</button>@endforeach</div></fieldset>
-                    <fieldset><legend>Objecten</legend><div class="object-buttons"><button type="button" data-tile="O0">◆ Spijkers</button><button type="button" data-tile="O1">♣ Heg</button><button type="button" data-tile="O2">● Muur (O2)</button><button type="button" data-tile="O3">▰ Hout</button><button type="button" data-tile="R1">↻ Draai</button></div></fieldset>
+                    <fieldset><legend>Objecten</legend><div class="object-buttons"><button type="button" data-tile="O0">◆ Spijkers</button><button type="button" data-tile="O1">♣ Heg</button><button type="button" data-tile="O2">● Muur (O2)</button><button type="button" data-tile="O3">▰ Hout</button></div></fieldset>
+                    <fieldset><legend>Draaischijven</legend><div class="object-buttons"><button type="button" data-tile="R0">↻ R0 · Willekeurig</button><button type="button" data-tile="R1">↻ R1 · 90°</button><button type="button" data-tile="R2">↻ R2 · 180°</button><button type="button" data-tile="R3">↻ R3 · 270°</button></div></fieldset>
                     <fieldset><legend>Bonussen</legend><div class="object-buttons">@foreach(range(1, 9) as $bonus)<button type="button" data-tile="E{{ $bonus }}">✦ E{{ $bonus }} · €{{ 2 ** $bonus }}</button>@endforeach</div></fieldset>
                     <fieldset><legend>Bommen</legend><div class="object-buttons">@foreach(range(0, 8) as $timer)<button type="button" data-tile="B{{ $timer }}">● B{{ $timer }} · {{ $timer === 0 ? 'direct' : $timer.' sec' }}</button>@endforeach</div></fieldset>
-                    <fieldset><legend>Start en doel</legend><div class="object-buttons"><button type="button" data-tile="S0">▲ Start N</button><button type="button" data-tile="S1">▶ Start O</button><button type="button" data-tile="S2">▼ Start Z</button><button type="button" data-tile="S3">◀ Start W</button><button type="button" data-tile="D1">⌖ Doel 1</button></div></fieldset>
+                    <fieldset><legend>Start</legend><div class="object-buttons"><button type="button" data-tile="S0">▲ Start N</button><button type="button" data-tile="S1">▶ Start O</button><button type="button" data-tile="S2">▼ Start Z</button><button type="button" data-tile="S3">◀ Start W</button></div></fieldset>
+                    <fieldset><legend>Doelen</legend><div class="object-buttons">@foreach(range(1, 9) as $goal)<button type="button" data-tile="D{{ $goal }}">⌖ Doel {{ $goal }}</button>@endforeach</div></fieldset>
                 </div>
                 <button type="button" class="button secondary full" id="fillField">Vul met C3</button>
                 <button type="button" class="button secondary full palette-secondary-action" id="wallBorder">Plaats murenrand</button>
@@ -46,4 +48,4 @@
 </section>
 @endsection
 
-@push('scripts')<script src="{{ asset('js/glade-builder.js') }}"></script>@endpush
+@push('scripts')<script src="{{ asset('js/glade-builder.js') }}?v={{ filemtime(public_path('js/glade-builder.js')) }}"></script>@endpush
