@@ -1,0 +1,52 @@
+gebruik kompas
+stapVooruit
+stapVooruit
+zolang kompas != 1 {
+    draaiRechts
+}
+stapVooruit
+stapVooruit
+stapVooruit
+draaiRechts
+stapVooruit
+stapVooruit
+draaiRechts
+stapVooruit
+stapVooruit
+stapVooruit
+draaiLinks
+stapVooruit
+stapVooruit
+draaiLinks
+stapVooruit
+zolang kompas != 1 {
+    draaiRechts
+}
+stapVooruit
+stapVooruit
+stapVooruit
+draaiLinks
+stapVooruit
+draaiRechts
+stapVooruit
+stapVooruit
+zolang kompas != 1 {
+    draaiRechts
+}
+stapVooruit
+stapVooruit
+draaiRechts
+stapVooruit
+stapVooruit
+draaiLinks
+stapVooruit
+zolang kompas != 1 {
+    draaiRechts
+}
+stapVooruit
+stapVooruit
+draaiLinks
+stapVooruit
+stapAchteruit
+draaiRechts
+stapVooruit

@@ -1,0 +1,30 @@
+gebruik kompas
+gebruik kleurOog
+gebruik i
+
+zolang 1 == 1 {
+    stapVooruit
+    i = kleurOog
+
+    als i < 3 {
+        als i == 1 {
+            draaiLinks
+        } anders {
+            zolang kompas % 2 == 0 {
+                draaiRechts
+            }
+
+            als kompas == 1 {
+                stapVooruit
+            } anders {
+                stapAchteruit
+                draaiRechts
+                draaiRechts
+            }
+        }
+    } anders {
+        als i > 4 {
+            draaiRechts
+        }
+    }
+}

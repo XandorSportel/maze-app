@@ -1,0 +1,42 @@
+gebruik i
+
+zolang 1 == 1 {
+   stapVooruit
+
+   als i == 2 {
+      draaiRechts
+   }
+
+   stapVooruit
+
+   als i % 7 > 4 {
+      draaiRechts
+   }
+
+   stapVooruit
+
+   als i == 6 {
+      draaiLinks
+   }
+
+   stapVooruit
+   stapVooruit
+   stapVooruit
+   stapVooruit
+
+   als i == 3 {
+      draaiLinks
+   }
+
+   stapVooruit
+
+   als i == 0 {
+      draaiLinks
+   }
+
+   als i * i + 6 == i * 5 {
+      draaiRechts
+   }
+
+   i = i + 1
+}

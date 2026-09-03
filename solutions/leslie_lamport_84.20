@@ -1,0 +1,13 @@
+zolang 1 == 1 {
+    stapVooruit
+    stapVooruit
+    stapVooruit
+    stapVooruit
+    stapVooruit
+    draaiRechts
+    stapVooruit
+    draaiLinks
+    stapVooruit
+    stapVooruit
+    draaiLinks
+}

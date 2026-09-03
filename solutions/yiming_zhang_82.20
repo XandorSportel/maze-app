@@ -1,0 +1,37 @@
+gebruik i
+
+zolang 1 == 1 {
+    stapVooruit
+
+    als i == 8 {
+        stapAchteruit
+        stapAchteruit
+        draaiRechts
+        stapVooruit
+        stapAchteruit
+        draaiLinks
+        stapVooruit
+        stapVooruit
+        draaiRechts
+    }
+
+    stapVooruit
+
+    als i == 2 {
+        draaiLinks
+    }
+
+    stapVooruit
+
+    als i == 5 {
+        draaiRechts
+    }
+
+    stapVooruit
+
+    als i == 0 {
+        draaiRechts
+    }
+
+    i = i + 1
+}

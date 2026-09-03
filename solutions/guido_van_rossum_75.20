@@ -1,0 +1,39 @@
+gebruik i
+
+stapVooruit
+draaiRechts
+
+zolang 1 == 1 {
+    stapAchteruit
+
+    als i == 1 {
+        draaiLinks
+        draaiLinks
+    }
+
+    stapAchteruit
+
+    als i == 2 {
+        draaiRechts
+    }
+
+    als i == 4 {
+        draaiLinks
+    }
+
+    als i == 5 {
+        draaiLinks
+        draaiLinks
+    }
+
+    stapAchteruit
+
+    als i % 5 == 1 {
+        draaiRechts
+    }
+
+    stapAchteruit
+    stapAchteruit
+
+    i = i + 1
+}
